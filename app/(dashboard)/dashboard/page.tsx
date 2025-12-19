@@ -41,7 +41,12 @@ export default async function DashboardPage() {
 
                     <div className="col-span-3 space-y-4">
                         <div className="p-6 border rounded-xl bg-card shadow-sm h-full">
-                            <h3 className="font-semibold mb-4">Recent Decks</h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold mb-4">Recent Decks</h3>
+                                <Link href="/dashboard/decks">
+                                    <Button size="sm" className="ml-auto">View All</Button>
+                                </Link>
+                            </div>
                             <div className="space-y-3">
                                 {decks?.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">No slides uploaded yet.</p>

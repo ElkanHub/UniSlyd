@@ -14,6 +14,7 @@ export function Sidebar() {
     const links = [
         { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
         { href: '/dashboard/chat/new', label: 'New Study Session', icon: MessageSquarePlus },
+        { href: '/dashboard/decks', label: 'My Decks', icon: FileText },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ]
 
@@ -21,7 +22,7 @@ export function Sidebar() {
         <div className="flex bg-muted/20 border-r w-64 h-screen flex-col flex-shrink-0">
             <div className="p-6">
                 <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
-                    Unislyd
+                    <Link href="/">Unislyd</Link>
                 </h2>
             </div>
 
