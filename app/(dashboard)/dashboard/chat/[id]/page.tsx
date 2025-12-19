@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { ChatInput } from '@/components/chat/chat-input'
 import { createClient } from '@/lib/supabase/client'
-import { v4 as uuidv4 } from 'uuid' // Need to install uuid or use crypto.randomUUID
+
 
 type Message = {
     id: string
@@ -22,9 +22,29 @@ export default function ChatPage() {
 
     // Fetch history on load
     React.useEffect(() => {
-        // TODO: Fetch conversation history from Supabase
-        // const supabase = createClient()
-        // ...
+        const fetchMessages = async () => {
+            setLoading(true)
+            const supabase = createClient()
+            try {
+                const { data, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('conversation_id', id)
+                    .order('created_at', { ascending: true })
+
+                if (error) throw error
+
+                if (data) {
+                    setMessages(data as Message[])
+                }
+            } catch (error) {
+                console.error('Error fetching messages:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchMessages()
     }, [id])
 
     const handleSend = async (text: string, examMode: boolean) => {

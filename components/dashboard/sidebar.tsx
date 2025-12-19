@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { UsageBanner } from '@/components/dashboard/usage-banner'
 import { signOut } from '@/app/(auth)/actions'
-import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText } from 'lucide-react'
+import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText, MessageSquare } from 'lucide-react'
 
 export function Sidebar() {
     const pathname = usePathname()
@@ -14,6 +14,7 @@ export function Sidebar() {
     const links = [
         { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
         { href: '/dashboard/chat/new', label: 'New Study Session', icon: MessageSquarePlus },
+        { href: '/dashboard/chats', label: 'My Chats', icon: MessageSquare },
         { href: '/dashboard/decks', label: 'My Decks', icon: FileText },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ]

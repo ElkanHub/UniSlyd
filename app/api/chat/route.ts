@@ -138,10 +138,67 @@ export async function POST(req: NextRequest) {
             sources: sources
         })
 
+        // 7. Auto-generate Title if needed
+        // We run this without awaiting to speed up response? 
+        // Note: In serverless, unawaited promises can be killed. 
+        // Ideally use `waitUntil` from vercel/functions or just await it. 
+        // For robustness here, we will await it but use a Promise.all or just await.
+        // Given Llama3-8b is super fast, let's just await it to be safe.
+        await updateConversationTitle(conversationId, message, reply)
+
+
         return NextResponse.json({ reply, sources })
 
     } catch (error) {
         console.error('Chat API Error:', error)
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    }
+}
+
+// Background function to generate title (fire-and-forget in a real edge runtime is tricky, but we'll await it for now or use Vercel functions if available, 
+// strictly for this environment we will just await it to ensure it happens, or do it after the response if we could, but Next.js API routes are request-bound)
+// ACTUALLY: The best place is step 5.5, before returning JSON but in parallel with saving the message?
+// Let's refactor slightly to do it before the return.
+
+async function updateConversationTitle(conversationId: string, firstMessage: string, reply: string) {
+    try {
+        const supabase = await createClient()
+
+        // Check current title
+        const { data: conv } = await supabase
+            .from('conversations')
+            .select('title')
+            .eq('id', conversationId)
+            .single()
+
+        // Only update if it's the default title
+        if (conv?.title === 'New Study Session' || conv?.title === 'Study Session') {
+            const groq = new Groq({
+                apiKey: process.env.GROQ_API_KEY
+            });
+
+            // Generate a sparse title
+            const titleCompletion = await groq.chat.completions.create({
+                messages: [
+                    {
+                        role: "system",
+                        content: "Generate a very brief, specific title (max 4-5 words) for a study session that starts with this user message. Do not use quotes. Just the title."
+                    },
+                    { role: "user", content: firstMessage }
+                ],
+                model: "llama3-8b-8192", // Fast, cheap model
+                max_tokens: 15,
+            });
+
+            const newTitle = titleCompletion.choices[0]?.message?.content?.trim()
+            if (newTitle) {
+                await supabase
+                    .from('conversations')
+                    .update({ title: newTitle })
+                    .eq('id', conversationId)
+            }
+        }
+    } catch (e) {
+        console.error("Failed to auto-title conversation:", e)
     }
 }
