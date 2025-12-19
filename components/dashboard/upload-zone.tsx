@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { StripedPattern } from "@/components/magicui/striped-pattern"
+
 
 export function UploadZone() {
     const [files, setFiles] = React.useState<File[]>([])
@@ -88,10 +90,11 @@ export function UploadZone() {
             <div
                 {...getRootProps()}
                 className={cn(
-                    "border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-colors",
+                    "border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-colors relative overflow-hidden",
                     isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
                 )}
             >
+                <StripedPattern className="stroke-[0.3] [stroke-dasharray:8,4]" />
                 <input {...getInputProps()} />
                 <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium">

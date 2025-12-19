@@ -4,6 +4,7 @@ import { useUsage } from '@/hooks/use-usage'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Sparkles, AlertCircle } from 'lucide-react'
+import { ShinyButton } from "@/components/ui/shiny-button"
 
 export function UsageBanner() {
     const { data: usage, isLoading } = useUsage()
@@ -40,9 +41,9 @@ export function UsageBanner() {
                 <Progress value={queryPercent} className="h-2" indicatorColor={queryPercent >= 100 ? "bg-destructive" : "bg-primary"} />
             </div>
 
-            <Button className="w-full text-xs" size="sm" variant="default">
+            <ShinyButton className="w-full text-xs">
                 Upgrade to Pro
-            </Button>
+            </ShinyButton>
         </div>
     )
 }
