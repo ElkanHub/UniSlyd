@@ -77,3 +77,38 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- 7. Add deck_id to conversations
+alter table conversations add column deck_id uuid references decks(id);
+
+-- 8. RPC: Match Slides
+create or replace function match_slides (
+  query_embedding vector(1536),
+  match_threshold float,
+  match_count int,
+  filter_deck_id uuid default null
+)
+returns table (
+  id uuid,
+  deck_id uuid,
+  slide_number int,
+  content text,
+  similarity float
+)
+language plpgsql
+as $$
+begin
+  return query
+  select
+    slide_chunks.id,
+    slide_chunks.deck_id,
+    slide_chunks.slide_number,
+    slide_chunks.content,
+    1 - (slide_chunks.embedding <=> query_embedding) as similarity
+  from slide_chunks
+  where 1 - (slide_chunks.embedding <=> query_embedding) > match_threshold
+  and (filter_deck_id is null or slide_chunks.deck_id = filter_deck_id)
+  order by similarity desc
+  limit match_count;
+end;
+$$;

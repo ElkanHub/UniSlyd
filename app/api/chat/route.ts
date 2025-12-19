@@ -16,16 +16,24 @@ export async function POST(req: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-        // 2. Embed Query
+        // 2. Fetch conversation to get deck_id for filtering
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('deck_id')
+            .eq('id', conversationId)
+            .single()
+
+        const filterDeckId = conversation?.deck_id
+
+        // 3. Embed Query
         const queryEmbedding = await generateEmbedding(message)
 
-        // 3. Vector Search (RPC call)
-        // We need to create this RPC function in Supabase first (see schema update)
-        // For now assuming we can call it directly or just use basic query if we had pgvector-js, but RPC is best
+        // 4. Vector Search (RPC call)
         const { data: similarChunks, error: searchError } = await supabase.rpc('match_slides', {
             query_embedding: queryEmbedding,
             match_threshold: 0.5, // tunable
-            match_count: 5
+            match_count: 5,
+            filter_deck_id: filterDeckId
         })
 
         if (searchError) {
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
                 { role: "system", content: systemPrompt },
                 { role: "user", content: message }
             ],
-            model: "llama3-70b-8192", // High performance open model
+            model: "llama-3.3-70b-versatile", // High performance open model
             temperature: examMode ? 0.3 : 0.7,
             max_tokens: 1024,
         });

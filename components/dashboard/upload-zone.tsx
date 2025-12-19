@@ -40,6 +40,7 @@ export function UploadZone() {
         setUploading(true)
 
         try {
+            let lastDeckId = null;
             for (const file of files) {
                 const formData = new FormData()
                 formData.append('file', file)
@@ -60,12 +61,19 @@ export function UploadZone() {
                         throw new Error("Server Error: See console for details")
                     }
                 }
+
+                const data = await res.json()
+                if (data.deckId) lastDeckId = data.deckId
             }
 
-            toast.success("Files uploaded successfully!")
             toast.success("Files uploaded successfully! Starting session...")
             setFiles([])
-            router.push('/dashboard/chat/new')
+
+            if (lastDeckId) {
+                router.push(`/dashboard/chat/new?deckId=${lastDeckId}`)
+            } else {
+                router.push('/dashboard/chat/new')
+            }
 
         } catch (error: any) {
             console.error(error)

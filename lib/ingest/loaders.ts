@@ -5,6 +5,7 @@ let pdf = require('pdf-parse/lib/pdf-parse.js')
 if (pdf.default) pdf = pdf.default
 // @ts-ignore
 import pptx2json from 'pptx2json'
+import mammoth from 'mammoth'
 
 // Basic parser interface
 export type ParsedContent = {
@@ -36,7 +37,7 @@ export async function parseFile(file: File): Promise<ParsedContent> {
 async function parsePDF(buffer: Buffer) {
     const data = await pdf(buffer)
     return {
-        text: data.text,
+        text: cleanText(data.text),
         metadata: {
             pages: data.numpages
         }
@@ -65,6 +66,20 @@ import fs from 'fs'
 // @ts-ignore
 import path from 'path'
 
+// Helper cleaning function
+function cleanText(text: string): string {
+    return text
+        // Remove non-printable characters (keep newlines/tabs)
+        .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "")
+        // Collapse multiple spaces/tabs into single space
+        .replace(/[ \t]+/g, " ")
+        // Fix split words (hyphen at end of line) - basic attempt
+        .replace(/-\s+/g, "")
+        // Remove common placeholder text (case insensitive)
+        .replace(/click to add (title|text|subtitle)/gi, "")
+        .trim()
+}
+
 async function parsePPTX(buffer: Buffer) {
     // pptx2json requires a file path, so we use a temp file
     const tempDir = os.tmpdir()
@@ -79,14 +94,21 @@ async function parsePPTX(buffer: Buffer) {
         // Helper to recursively extract text from the messy JSON structure
         const extractText = (obj: any): string => {
             let text = ''
-            if (typeof obj === 'string') return obj + ' '
+            if (typeof obj === 'string') {
+                // Heuristic: skip short UUID-like strings or file paths if they appear as raw strings
+                if (obj.length < 3) return ''
+                if (obj.includes('http://') || obj.includes('https://')) return '' // Skip URLs in raw text for now if they act as noise
+                return obj + ' '
+            }
             if (Array.isArray(obj)) {
                 return obj.map(extractText).join(' ')
             }
             if (typeof obj === 'object' && obj !== null) {
-                // pptx2json specific keys often look like 'content', 'text', etc.
-                // We'll just grab all string values recursively for now
+                // Skip specific keys that are usually metadata/garbage in pptx2json output
+                const skipKeys = new Set(['uri', 'rId', 'name', 'type', 'schema', 'layout', 'slideLayoutSpNode'])
+
                 for (const key in obj) {
+                    if (skipKeys.has(key)) continue
                     text += extractText(obj[key])
                 }
             }
@@ -94,19 +116,20 @@ async function parsePPTX(buffer: Buffer) {
         }
 
         const rawText = extractText(json)
+        const cleanedText = cleanText(rawText)
 
         // Naive page count estimation: 
-        // If it's an object, keys might be slides. If array, length.
-        // If unknown, default to 1 so it's not 0.
         let pageCount = 1
-        if (Array.isArray(json)) {
+        if (json && json['slides'] && Array.isArray(json['slides'])) {
+            pageCount = json['slides'].length
+        } else if (Array.isArray(json)) {
             pageCount = json.length
         } else if (typeof json === 'object' && json !== null) {
             pageCount = Object.keys(json).length
         }
 
         return {
-            text: rawText.replace(/\s+/g, ' ').trim(), // Clean up whitespace
+            text: cleanedText,
             metadata: {
                 pages: pageCount
             }

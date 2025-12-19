@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { Send, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea' // Will create this
+import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 interface ChatInputProps {
@@ -47,12 +47,12 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
                 </div>
 
                 <div className="relative flex w-full">
-                    <textarea
+                    <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask a question about your slides..."
-                        className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                        className="min-h-[60px] resize-none"
                         disabled={disabled}
                     />
                     <Button

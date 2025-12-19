@@ -1,11 +1,8 @@
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Markdown } from "@/components/ui/markdown" // We will need a markdown renderer, simple placeholder for now or use library
+import { Markdown } from "@/components/ui/markdown"
 
-// Simple markdown renderer replacement for now until we install react-markdown
-function SimpleMarkdown({ content }: { content: string }) {
-    return <div className="whitespace-pre-wrap">{content}</div>
-}
+
 
 interface MessageBubbleProps {
     role: 'user' | 'assistant'
@@ -27,7 +24,7 @@ export function MessageBubble({ role, content, sources }: MessageBubbleProps) {
                     {role === 'user' ? 'You' : 'Unislyd'}
                 </div>
                 <div className="text-sm leading-relaxed text-foreground/90">
-                    <SimpleMarkdown content={content} />
+                    <Markdown>{content}</Markdown>
                 </div>
                 {sources && sources.length > 0 && (
                     <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">

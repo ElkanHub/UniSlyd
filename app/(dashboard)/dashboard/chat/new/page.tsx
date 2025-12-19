@@ -1,22 +1,30 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { v4 as uuidv4 } from 'uuid' // We'll rely on DB default or just random UUID here. 
-// Note: UUID import might fail if not installed/typed. Let's use crypto.randomUUID()
 
-export default async function NewChatPage() {
+
+// Note: In Next.js 13+ app dir, searchParams is a prop to the page
+export default async function NewChatPage({
+    searchParams,
+}: {
+    searchParams: { [key: string]: string | string[] | undefined }
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
+    const deckId = searchParams.deckId as string | undefined
+
     // Create a new conversation record
     const { data, error } = await supabase.from('conversations').insert({
         user_id: user.id,
-        title: 'New Study Session'
+        title: deckId ? 'Study Session' : 'New Study Session',
+        deck_id: deckId || null // Link the deck
     }).select('id').single()
 
     if (error || !data) {
         // Fallback if DB fails? Just go to dashboard
+        console.error("Failed to create conversation", error)
         redirect('/dashboard')
     }
 
