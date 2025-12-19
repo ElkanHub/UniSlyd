@@ -1,5 +1,8 @@
-import mammoth from 'mammoth'
-import pdf from 'pdf-parse'
+// @ts-ignore
+// @ts-ignore
+let pdf = require('pdf-parse/lib/pdf-parse.js')
+// Handle ESM/CJS interop (Next.js sometimes wraps CJS in default)
+if (pdf.default) pdf = pdf.default
 // @ts-ignore
 import pptx2json from 'pptx2json'
 
@@ -55,28 +58,66 @@ async function parseTXT(buffer: Buffer) {
     }
 }
 
-async function parsePPTX(buffer: Buffer) {
-    // PPTX parsing is complex. Using a basic reliable approach or library is key.
-    // pptx2json usually converts to JSON, we need to extract text from that JSON.
-    // Implementation depends on the specific library version API.
-    // For now, we will wrap in try-catch and assume a basic text extraction.
+// @ts-ignore
+import os from 'os'
+// @ts-ignore
+import fs from 'fs'
+// @ts-ignore
+import path from 'path'
 
-    // NOTE: This is a placeholder for the robust PPTX logic requested.
-    // Since we can't run this library without testing, we'll setup the structure.
-    // Using a robust customized parser is recommended. 
+async function parsePPTX(buffer: Buffer) {
+    // pptx2json requires a file path, so we use a temp file
+    const tempDir = os.tmpdir()
+    const tempFilePath = path.join(tempDir, `upload-${Date.now()}.pptx`)
 
     try {
+        fs.writeFileSync(tempFilePath, buffer)
+
         const pptx = new pptx2json()
-        const json = await pptx.toJson(buffer)
-        // Extract text from the JSON structure
-        // This part highly depends on pptx2json output structure
-        // For this plan, we will return a placeholder if library fails or is complex
+        const json = await pptx.toJson(tempFilePath)
+
+        // Helper to recursively extract text from the messy JSON structure
+        const extractText = (obj: any): string => {
+            let text = ''
+            if (typeof obj === 'string') return obj + ' '
+            if (Array.isArray(obj)) {
+                return obj.map(extractText).join(' ')
+            }
+            if (typeof obj === 'object' && obj !== null) {
+                // pptx2json specific keys often look like 'content', 'text', etc.
+                // We'll just grab all string values recursively for now
+                for (const key in obj) {
+                    text += extractText(obj[key])
+                }
+            }
+            return text
+        }
+
+        const rawText = extractText(json)
+
+        // Naive page count estimation: 
+        // If it's an object, keys might be slides. If array, length.
+        // If unknown, default to 1 so it's not 0.
+        let pageCount = 1
+        if (Array.isArray(json)) {
+            pageCount = json.length
+        } else if (typeof json === 'object' && json !== null) {
+            pageCount = Object.keys(json).length
+        }
+
         return {
-            text: JSON.stringify(json), // Temporary dump
-            metadata: {}
+            text: rawText.replace(/\s+/g, ' ').trim(), // Clean up whitespace
+            metadata: {
+                pages: pageCount
+            }
         }
     } catch (e) {
         console.error("PPTX Parsing failed", e)
         throw new Error("Failed to parse PPTX")
+    } finally {
+        // Cleanup temp file
+        if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath)
+        }
     }
 }

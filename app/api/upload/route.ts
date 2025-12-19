@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
         let parsedContent
         try {
             parsedContent = await parseFile(file)
-        } catch (e) {
+        } catch (e: any) {
             console.error("Parse Error", e)
-            return NextResponse.json({ error: 'Failed to parse file content' }, { status: 422 })
+            return NextResponse.json({ error: `Failed to parse file content: ${e.message}` }, { status: 422 })
         }
 
         // 3. Create Deck Record

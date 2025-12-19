@@ -5,6 +5,8 @@ import { useDropzone } from 'react-dropzone'
 import { UploadCloud, File, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export function UploadZone() {
     const [files, setFiles] = React.useState<File[]>([])
@@ -31,18 +33,46 @@ export function UploadZone() {
         setFiles((prev) => prev.filter((_, i) => i !== index))
     }
 
+    const router = useRouter()
+
     const handleUpload = async () => {
         if (files.length === 0) return
         setUploading(true)
 
-        // TODO: Implement actual upload logic to /api/upload
-        // We will iterate and upload one by one or batch
+        try {
+            for (const file of files) {
+                const formData = new FormData()
+                formData.append('file', file)
 
-        setTimeout(() => {
-            setUploading(false)
-            alert('Simulated Upload Complete')
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                })
+
+                if (!res.ok) {
+                    const contentType = res.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        const error = await res.json()
+                        throw new Error(error.error || 'Upload failed')
+                    } else {
+                        const text = await res.text()
+                        console.error("Server Error Response:", text)
+                        throw new Error("Server Error: See console for details")
+                    }
+                }
+            }
+
+            toast.success("Files uploaded successfully!")
+            toast.success("Files uploaded successfully! Starting session...")
             setFiles([])
-        }, 2000)
+            router.push('/dashboard/chat/new')
+
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || "Something went wrong")
+        } finally {
+            setUploading(false)
+        }
     }
 
     return (

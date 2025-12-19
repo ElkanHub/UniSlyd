@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function LandingPage() {
     return (
@@ -11,10 +12,14 @@ export default function LandingPage() {
                     Upload your class slides. Ask questions. Get precise answers sourced directly from your lectures. Built for students, not generic AI.
                 </p>
                 <div className="space-x-4">
-                    <Button size="lg">Get Started Free</Button>
-                    <Button size="lg" variant="outline">
-                        See How It Works
-                    </Button>
+                    <Link href="/signup">
+                        <Button size="lg">Get Started Free</Button>
+                    </Link>
+                    <Link href="#features">
+                        <Button size="lg" variant="outline">
+                            See How It Works
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </section>
