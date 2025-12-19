@@ -6,11 +6,13 @@ if (pdf.default) pdf = pdf.default
 // @ts-ignore
 import pptx2json from 'pptx2json'
 import mammoth from 'mammoth'
+import { extractPptxText } from '@/lib/extractPptxText'
 
 // Basic parser interface
 export type ParsedContent = {
     text: string
     metadata?: Record<string, any>
+    slides?: { slideIndex: number; text: string[] }[] // Added structured slides
 }
 
 export async function parseFile(file: File): Promise<ParsedContent> {
@@ -34,10 +36,31 @@ export async function parseFile(file: File): Promise<ParsedContent> {
     throw new Error(`Unsupported file type: ${type}`)
 }
 
+// @ts-ignore
+import os from 'os'
+// @ts-ignore
+import fs from 'fs'
+// @ts-ignore
+import path from 'path'
+
+// Helper cleaning function (still useful for PDF or general cleanup)
+function cleanText(text: string): string {
+    return text
+        // Remove non-printable characters (keep newlines/tabs)
+        .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "")
+        // Collapse multiple spaces/tabs into single space (but keep newlines)
+        .replace(/[ \t]+/g, " ")
+        // Remove weird excessive underscores or dashes often found in layouts
+        .replace(/[_-]{3,}/g, " ")
+        // Remove common placeholder text (case insensitive)
+        .replace(/click to add (title|text|subtitle)/gi, "")
+        .trim()
+}
+
 async function parsePDF(buffer: Buffer) {
     const data = await pdf(buffer)
     return {
-        text: cleanText(data.text),
+        text: cleanText(data.text), // Still use basic cleaning for PDF
         metadata: {
             pages: data.numpages
         }
@@ -59,27 +82,6 @@ async function parseTXT(buffer: Buffer) {
     }
 }
 
-// @ts-ignore
-import os from 'os'
-// @ts-ignore
-import fs from 'fs'
-// @ts-ignore
-import path from 'path'
-
-// Helper cleaning function
-function cleanText(text: string): string {
-    return text
-        // Remove non-printable characters (keep newlines/tabs)
-        .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "")
-        // Collapse multiple spaces/tabs into single space
-        .replace(/[ \t]+/g, " ")
-        // Fix split words (hyphen at end of line) - basic attempt
-        .replace(/-\s+/g, "")
-        // Remove common placeholder text (case insensitive)
-        .replace(/click to add (title|text|subtitle)/gi, "")
-        .trim()
-}
-
 async function parsePPTX(buffer: Buffer) {
     // pptx2json requires a file path, so we use a temp file
     const tempDir = os.tmpdir()
@@ -88,50 +90,20 @@ async function parsePPTX(buffer: Buffer) {
     try {
         fs.writeFileSync(tempFilePath, buffer)
 
-        const pptx = new pptx2json()
-        const json = await pptx.toJson(tempFilePath)
+        // Use the new robust extraction utility which returns structured slides
+        const slides = await extractPptxText(tempFilePath)
 
-        // Helper to recursively extract text from the messy JSON structure
-        const extractText = (obj: any): string => {
-            let text = ''
-            if (typeof obj === 'string') {
-                // Heuristic: skip short UUID-like strings or file paths if they appear as raw strings
-                if (obj.length < 3) return ''
-                if (obj.includes('http://') || obj.includes('https://')) return '' // Skip URLs in raw text for now if they act as noise
-                return obj + ' '
-            }
-            if (Array.isArray(obj)) {
-                return obj.map(extractText).join(' ')
-            }
-            if (typeof obj === 'object' && obj !== null) {
-                // Skip specific keys that are usually metadata/garbage in pptx2json output
-                const skipKeys = new Set(['uri', 'rId', 'name', 'type', 'schema', 'layout', 'slideLayoutSpNode'])
-
-                for (const key in obj) {
-                    if (skipKeys.has(key)) continue
-                    text += extractText(obj[key])
-                }
-            }
-            return text
-        }
-
-        const rawText = extractText(json)
-        const cleanedText = cleanText(rawText)
-
-        // Naive page count estimation: 
-        let pageCount = 1
-        if (json && json['slides'] && Array.isArray(json['slides'])) {
-            pageCount = json['slides'].length
-        } else if (Array.isArray(json)) {
-            pageCount = json.length
-        } else if (typeof json === 'object' && json !== null) {
-            pageCount = Object.keys(json).length
-        }
+        // Combine all text for the main "text" field
+        // We preserve slide structure in the text by adding headers
+        const fullText = slides.map(s =>
+            `[Slide ${s.slideIndex}]\n${s.text.join('\n')}`
+        ).join('\n\n')
 
         return {
-            text: cleanedText,
+            text: fullText,
+            slides: slides, // Return structured data
             metadata: {
-                pages: pageCount
+                pages: slides.length
             }
         }
     } catch (e) {

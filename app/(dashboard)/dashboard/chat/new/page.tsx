@@ -2,18 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 
-// Note: In Next.js 13+ app dir, searchParams is a prop to the page
+// Note: In Next.js 15 app dir, searchParams is a Promise
 export default async function NewChatPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined }
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
 
-    const deckId = searchParams.deckId as string | undefined
+    const { deckId } = await searchParams
 
     // Create a new conversation record
     const { data, error } = await supabase.from('conversations').insert({

@@ -37,8 +37,21 @@ export async function POST(req: NextRequest) {
 
         console.log('Processing file:', file.name, file.type)
 
-        // 1. Upload to Storage (Optional for now, but good practice)
-        // const { data: storageData, error: storageError } = await supabase.storage.from('decks').upload(...)
+        // 1. Upload to Storage
+        const fileExt = file.name.split('.').pop()
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`
+
+        const { data: storageData, error: storageError } = await supabase
+            .storage
+            .from('decks')
+            .upload(filePath, file)
+
+        if (storageError) {
+            console.error("Storage Upload Error", storageError)
+            return NextResponse.json({ error: 'Failed to upload file to storage' }, { status: 500 })
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from('decks').getPublicUrl(filePath)
 
         // 2. Parse Text
         let parsedContent
@@ -55,6 +68,7 @@ export async function POST(req: NextRequest) {
             .insert({
                 user_id: user.id,
                 filename: file.name,
+                original_file_url: publicUrl,
                 page_count: parsedContent.metadata?.pages || 0,
             })
             .select()
@@ -67,42 +81,78 @@ export async function POST(req: NextRequest) {
 
         // 4. Chunk & Embed
         try {
-            const chunks = chunkText(parsedContent.text)
+            let chunkRecords = []
 
-            // Use Promise.all with some concurrency limit ideally, but for now simple parallel
-            const embeddings = await Promise.all(
-                chunks.map(async (chunk) => {
-                    try {
-                        return await generateEmbedding(chunk)
-                    } catch (e) {
-                        console.error("Embedding failed for chunk", e)
-                        return null
+            console.log(`[Upload] Content parsed. Metadata:`, parsedContent.metadata)
+
+            if (parsedContent.slides && parsedContent.slides.length > 0) {
+                console.log(`[Upload] Processing ${parsedContent.slides.length} structured slides`)
+
+                // Process structured slides (PPTX)
+                // We process each slide individually to preserve boundaries
+                for (const slide of parsedContent.slides) {
+                    const slideText = slide.text.join('\n')
+                    // Basic chunking of this slide's text
+                    const chunks = chunkText(slideText)
+
+                    const embeddings = await Promise.all(
+                        chunks.map(chunk => generateEmbedding(chunk).catch(e => {
+                            console.error(`[Upload] Embedding failed for slide ${slide.slideIndex} chunk`, e)
+                            return null
+                        }))
+                    )
+
+                    chunks.forEach((chunk, i) => {
+                        if (embeddings[i]) {
+                            chunkRecords.push({
+                                deck_id: deck.id,
+                                slide_number: slide.slideIndex, // Use actual slide index
+                                content: chunk,
+                                embedding: embeddings[i],
+                                metadata: { ...parsedContent.metadata, slide: slide.slideIndex }
+                            })
+                        }
+                    })
+                }
+            } else {
+                console.log(`[Upload] No structured slides found. Fallback to naive global chunking.`)
+                // Fallback for PDF/DOCX (treat as one big text for now)
+                const chunks = chunkText(parsedContent.text)
+                const embeddings = await Promise.all(
+                    chunks.map(async (chunk) => {
+                        try {
+                            return await generateEmbedding(chunk)
+                        } catch (e) {
+                            console.error("Embedding failed for chunk", e)
+                            return null
+                        }
+                    })
+                )
+
+                chunkRecords = chunks.map((chunk, i) => {
+                    if (!embeddings[i]) return null
+                    return {
+                        deck_id: deck.id,
+                        slide_number: i + 1, // Approximation
+                        content: chunk,
+                        embedding: embeddings[i],
+                        metadata: parsedContent.metadata
                     }
-                })
-            )
-
-            const validEmbeddings = embeddings.filter(e => e !== null) as number[][]
-            // If all fail, we have a problem
-            if (validEmbeddings.length === 0 && chunks.length > 0) {
-                throw new Error("Failed to generate embeddings")
+                }).filter(r => r !== null)
             }
 
-            const chunkRecords = chunks.map((chunk, i) => {
-                if (!embeddings[i]) return null
-                return {
-                    deck_id: deck.id,
-                    slide_number: i + 1, // Approximation
-                    content: chunk,
-                    embedding: embeddings[i],
-                    metadata: parsedContent.metadata
+            console.log(`[Upload] Prepared ${chunkRecords.length} chunks for insertion.`)
+
+            if (chunkRecords.length === 0) {
+                // Warning but maybe not error if file was meaningless
+                console.warn("No chunks to insert")
+            } else {
+                const { error: chunkError } = await supabase.from('slide_chunks').insert(chunkRecords)
+                if (chunkError) {
+                    console.error("Chunk Insert Error", chunkError)
+                } else {
+                    console.log(`[Upload] Successfully inserted ${chunkRecords.length} chunks.`)
                 }
-            }).filter(r => r !== null)
-
-            const { error: chunkError } = await supabase.from('slide_chunks').insert(chunkRecords)
-
-            if (chunkError) {
-                console.error("Chunk Insert Error", chunkError)
-                // Non-fatal? Or fatal? let's log.
             }
         } catch (e) {
             console.error("Embedding Process Failed", e)

@@ -28,6 +28,27 @@ export async function POST(req: NextRequest) {
         // 3. Embed Query
         const queryEmbedding = await generateEmbedding(message)
 
+        // 3.5 Check for specific slide reference (Hybrid Search)
+        // Matches "slide 5", "slide #5", "Slide 5"
+        const slideMatch = message.match(/slide\s+#?(\d+)/i)
+        let specificSlideChunks: any[] = []
+
+        if (slideMatch && filterDeckId) {
+            const slideNum = parseInt(slideMatch[1])
+            console.log(`[Chat] Detected specific slide intent: Slide ${slideNum}`)
+
+            const { data: slides, error: slideError } = await supabase
+                .from('slide_chunks')
+                .select('*')
+                .eq('deck_id', filterDeckId)
+                .eq('slide_number', slideNum)
+                .limit(5)
+
+            if (!slideError && slides) {
+                specificSlideChunks = slides
+            }
+        }
+
         // 4. Vector Search (RPC call)
         const { data: similarChunks, error: searchError } = await supabase.rpc('match_slides', {
             query_embedding: queryEmbedding,
@@ -41,10 +62,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Search failed' }, { status: 500 })
         }
 
+        // Merge: Specific slides FIRST, then semantic results
+        // Use a Map to deduplicate by ID
+        const allChunks = [...specificSlideChunks, ...(similarChunks || [])]
+        const uniqueMap = new Map()
+        allChunks.forEach(chunk => {
+            if (!uniqueMap.has(chunk.id)) {
+                uniqueMap.set(chunk.id, chunk)
+            }
+        })
+        const finalChunks = Array.from(uniqueMap.values())
+
         // 4. Construct Prompt
-        const contextText = similarChunks?.map((chunk: any) =>
-            `[Slide ${chunk.slide_number}]: ${chunk.content}`
-        ).join('\n\n') || "No relevant slides found."
+        const contextText = finalChunks.length > 0
+            ? finalChunks.map((chunk: any) =>
+                `[Slide ${chunk.slide_number}]: ${chunk.content}`
+            ).join('\n\n')
+            : "No relevant slides found."
 
         const systemPrompt = `You are Unislyd, an AI study assistant for university students.
     
@@ -52,8 +86,10 @@ export async function POST(req: NextRequest) {
     ${contextText}
     
     INSTRUCTIONS:
-    - Answer the student's question based STRICTLY on the provided CONTEXT.
+    - Answer the student's question based on the provided CONTEXT and elaborate further with relevant information to help broaden and deepen the understanding for the student.
+    -If a student asks "What is on slide X?", answer the question based on the context found on the stated slide number or closest in meaning and let the student know that you have derived the answer from the meaning of the context [mention slide number]. 
     - If the answer is not in the context, say "I couldn't find that in your slides."
+    -If the question cannot be found word for word yet the meaning can be derived from the context, answer the question based on the context or closest in meaning and let the student know that you have derived the answer from the meaning of the context [mention slide number]. 
     - Cite your sources by referring to the Slide number (e.g., [Slide 4]).
     ${examMode ? `
     EXAM MODE ACTIVE:
@@ -73,7 +109,7 @@ export async function POST(req: NextRequest) {
                 { role: "system", content: systemPrompt },
                 { role: "user", content: message }
             ],
-            model: "llama-3.3-70b-versatile", // High performance open model
+            model: "openai/gpt-oss-120b", // High performance open model
             temperature: examMode ? 0.3 : 0.7,
             max_tokens: 1024,
         });
