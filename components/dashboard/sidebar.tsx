@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -9,7 +9,11 @@ import { signOut } from '@/app/(auth)/actions'
 import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText, MessageSquare } from 'lucide-react'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 
-export function Sidebar() {
+interface SidebarContentProps {
+    className?: string
+}
+
+export function SidebarContent({ className }: SidebarContentProps) {
     const pathname = usePathname()
 
     const links = [
@@ -21,9 +25,9 @@ export function Sidebar() {
     ]
 
     return (
-        <div className="flex bg-muted/20 border-r w-64 h-screen flex-col flex-shrink-0">
+        <div className={cn("flex flex-col h-full", className)}>
             <div className="p-6">
-                <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
                     <Link href="/">Unislyd</Link>
                 </h2>
             </div>
@@ -48,19 +52,27 @@ export function Sidebar() {
 
             <div className="mt-auto">
                 <UsageBanner />
-                <div className="p-4 border-t space-y-2">
-                    <div className="flex items-center justify-between px-2">
-                        <span className="text-xs font-medium text-muted-foreground">Theme</span>
-                        <ModeToggle />
-                    </div>
+                <div className="p-4 flex items-center justify-evenly border-t space-y-2">
                     <form action={signOut}>
-                        <Button variant="outline" className="w-full gap-2 text-muted-foreground" size="sm">
+                        <Button variant="outline" className="w-full gap-2 items-center justify-center text-muted-foreground" size="sm">
                             <LogOut className="w-4 h-4" />
                             Log Out
                         </Button>
                     </form>
+                    <div className="flex items-center justify-between px-2">
+                        {/* <span className="text-xs font-medium text-muted-foreground">Theme</span> */}
+                        <ModeToggle />
+                    </div>
                 </div>
             </div>
+        </div>
+    )
+}
+
+export function Sidebar() {
+    return (
+        <div className="hidden md:flex bg-muted/20 border-r w-64 h-screen flex-col flex-shrink-0">
+            <SidebarContent />
         </div>
     )
 }
