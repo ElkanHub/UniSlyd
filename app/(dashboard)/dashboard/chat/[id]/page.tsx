@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { ChatInput } from '@/components/chat/chat-input'
 import { createClient } from '@/lib/supabase/client'
-
+import { useQueryClient } from '@tanstack/react-query'
 
 type Message = {
     id: string
@@ -16,6 +16,7 @@ type Message = {
 
 export default function ChatPage() {
     const params = useParams()
+    const queryClient = useQueryClient()
     const [messages, setMessages] = React.useState<Message[]>([])
     const [loading, setLoading] = React.useState(false)
     const id = params.id as string
@@ -74,6 +75,9 @@ export default function ChatPage() {
                 sources: data.sources
             }
             setMessages(prev => [...prev, aiMsg])
+
+            // Invalidate usage to update banner immediately
+            await queryClient.invalidateQueries({ queryKey: ['usage'] })
 
         } catch (error) {
             console.error("Chat Error", error)

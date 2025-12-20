@@ -10,7 +10,7 @@ export default function DashboardLayout({
         <div className="flex h-screen overflow-hidden bg-background">
             <Sidebar />
             <div className="flex-1 flex flex-col h-full overflow-hidden">
-                <div className="md:hidden p-4 border-b flex items-center justify-between bg-background z-20">
+                <div className="md:hidden p-4 border-b flex items-center justify-start bg-background z-20">
                     <span className="font-bold text-lg">Unislyd</span>
                     <MobileSidebar />
                 </div>

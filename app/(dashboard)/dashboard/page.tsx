@@ -57,6 +57,10 @@ export default async function DashboardPage() {
                                                 <FileText className="w-4 h-4 text-primary flex-shrink-0" />
                                                 <span className="text-sm truncate max-w-[150px]">{deck.filename}</span>
                                             </div>
+                                            {/* Chat button */}
+                                            <Link href={`/dashboard/chat/${deck.id}`}>
+                                                <Button variant="outline" size="sm" className="ml-auto">Chat</Button>
+                                            </Link>
                                             <span className="text-xs text-muted-foreground">{deck.page_count} pgs</span>
                                         </div>
                                     ))
