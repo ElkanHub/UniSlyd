@@ -89,15 +89,46 @@ export async function POST(req: NextRequest) {
 
         if (fullContextMatch && filterDeckId) {
             console.log(`[Chat] Detected full context intent. Fetching all slides for deck: ${filterDeckId}`)
+            
+            // Fetch all slides (remove limit or set very high to get full potential content first, then truncate reliably)
+            // Or keep limit 100 if we assume 100 slides is safe-ish, but let's be smarter.
+            // Let's limit to 300 to capture really long decks, then truncate tokens.
             const { data: allSlides, error: allSlidesError } = await supabase
                 .from('slide_chunks')
                 .select('*')
                 .eq('deck_id', filterDeckId)
                 .order('slide_number', { ascending: true })
-                .limit(100) // Safety limit to prevent context window overflow (approx 30-50k tokens if large slides)
+                .limit(300) 
 
             if (!allSlidesError && allSlides) {
-                finalChunks = allSlides
+                // Token Management Strategy
+                const SAFE_TOKEN_LIMIT = 25000 // Approx 100k chars. safe for 128k context models
+                let currentTokens = 0
+                let truncatedSlides: any[] = []
+                let truncated = false
+
+                for (const slide of allSlides) {
+                    const text = slide.content || ""
+                    const estimatedTokens = Math.ceil(text.length / 4)
+
+                    if (currentTokens + estimatedTokens > SAFE_TOKEN_LIMIT) {
+                        truncated = true
+                        break
+                    }
+
+                    truncatedSlides.push(slide)
+                    currentTokens += estimatedTokens
+                }
+
+                finalChunks = truncatedSlides
+
+                if (truncated) {
+                    console.warn(`[Chat] Context truncated. Used ${truncatedSlides.length}/${allSlides.length} slides.`)
+                    // Optionally inject a "virtual" chunk at the end to warn the AI? 
+                    // Or just handle it in the system prompt construction. 
+                    // Let's add a property to the last chunk or handle it in step 4.
+                    // For now, we will trust the system prompt to handle "what you see is what you get".
+                }
             }
         } else {
             // Standard Hybrid Search

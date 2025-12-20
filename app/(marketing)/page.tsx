@@ -41,7 +41,7 @@ export default function StudyAILanding() {
                     {/* 4. SHIMMER BUTTON - The high-conversion CTA */}
                     <div className="flex flex-col sm:flex-row gap-4 mt-4">
                         <Link href="/signup">
-                            <ShimmerButton className="shadow-2xl transition-transform hover:scale-105">
+                            <ShimmerButton className="border-2 shadow-2xl transition-transform hover:scale-105">
                                 <span className="text-center text-sm font-semibold leading-none tracking-tight text-white dark:from-white dark:to-slate-900/10 lg:text-lg">
                                     Start Studying for Free
                                 </span>
