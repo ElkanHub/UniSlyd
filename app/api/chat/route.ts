@@ -102,7 +102,9 @@ export async function POST(req: NextRequest) {
 
             if (!allSlidesError && allSlides) {
                 // Token Management Strategy
-                const SAFE_TOKEN_LIMIT = 25000 // Approx 100k chars. safe for 128k context models
+                // Groq Free Tier has strict TPM limits (e.g. 8000 TPM). 
+                // We must stay well below this. 
+                const SAFE_TOKEN_LIMIT = 6000 
                 let currentTokens = 0
                 let truncatedSlides: any[] = []
                 let truncated = false
