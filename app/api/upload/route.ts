@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
         // 4. Chunk & Embed
         try {
-            let chunkRecords = []
+            let chunkRecords: any[] = []
 
             console.log(`[Upload] Content parsed. Metadata:`, parsedContent.metadata)
 
