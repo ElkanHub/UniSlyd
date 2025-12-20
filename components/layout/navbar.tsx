@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
+import { ScrollProgress } from "@/components/ui/scroll-progress"
 
 export function Navbar() {
     const [isOpen, setIsOpen] = React.useState(false)
@@ -45,6 +46,7 @@ export function Navbar() {
                         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                     </button>
                 </div>
+                <ScrollProgress />
             </div>
 
             {/* Mobile Menu */}
@@ -57,6 +59,7 @@ export function Navbar() {
                         <Link href="/login" className="font-medium">Log in</Link>
                         <Link href="/signup" className="font-medium text-primary">Sign up</Link>
                     </nav>
+                    <ScrollProgress />
                 </div>
             )}
         </header>
