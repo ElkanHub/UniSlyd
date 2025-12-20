@@ -69,7 +69,7 @@ export default async function DecksPage() {
             <Tabs defaultValue="all" className="w-full">
                 <TabsList className="mb-4">
                     <TabsTrigger value="all">All ({categorized.all.length})</TabsTrigger>
-                    <TabsTrigger value="pptx">Slides ({categorized.presentations.length})</TabsTrigger>
+                    <TabsTrigger value="pptx">Decks ({categorized.presentations.length})</TabsTrigger>
                     <TabsTrigger value="pdf">PDFs ({categorized.pdfs.length})</TabsTrigger>
                     <TabsTrigger value="docx">Docs ({categorized.documents.length})</TabsTrigger>
                     <TabsTrigger value="txt">Text ({categorized.text.length})</TabsTrigger>

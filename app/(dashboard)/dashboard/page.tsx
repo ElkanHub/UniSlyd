@@ -58,7 +58,7 @@ export default async function DashboardPage() {
                                                 <span className="text-sm truncate max-w-[150px]">{deck.filename}</span>
                                             </div>
                                             {/* Chat button */}
-                                            <Link href={`/dashboard/chat/${deck.id}`}>
+                                            <Link href={`/dashboard/chat/new?deckId=${deck.id}`}>
                                                 <Button variant="outline" size="sm" className="ml-auto">Chat</Button>
                                             </Link>
                                             <span className="text-xs text-muted-foreground">{deck.page_count} pgs</span>
@@ -74,8 +74,8 @@ export default async function DashboardPage() {
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold tracking-tight">Recent Study Sessions</h2>
-                    <Link href="/dashboard/chat/new">
-                        <Button size="sm">New Session</Button>
+                    <Link href="/dashboard/chats">
+                        <Button size="sm">View All</Button>
                     </Link>
                 </div>
 

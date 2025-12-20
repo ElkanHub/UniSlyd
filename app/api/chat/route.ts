@@ -65,17 +65,21 @@ export async function POST(req: NextRequest) {
         // 2. Fetch conversation to get deck_id for filtering
         const { data: conversation } = await supabase
             .from('conversations')
-            .select('deck_id')
+            .select('deck_id, decks(filename)')
             .eq('id', conversationId)
             .single()
 
         const filterDeckId = conversation?.deck_id
+        const deckFilename = Array.isArray(conversation?.decks)
+            ? conversation.decks[0]?.filename
+            : (conversation?.decks as any)?.filename
+
 
         // 3. Embed Query
         const queryEmbedding = await generateEmbedding(message)
 
         // 3.5 Check for "Full Context" intent (e.g., "stroll through slides", "overview")
-        const fullContextMatch = message.match(/(stroll|overview|whole|all\s+slides|entire\s+presentation|summary|full\s+context)/i)
+        const fullContextMatch = message.match(/(stroll|overview|whole|all\s+slides|entire\s+presentation|summary|summarize|full\s+context)/i)
 
         // 3.6 Check for specific slide reference (Hybrid Search)
         // Matches "slide 5", "slide #5", "Slide 5"
@@ -227,7 +231,8 @@ GENERAL MODE:
         const sources = finalChunks.map((c: any) => ({
             id: c.id,
             slide_number: c.slide_number,
-            deck_id: c.deck_id
+            deck_id: c.deck_id,
+            filename: deckFilename
         }))
 
         await supabase.from('messages').insert({

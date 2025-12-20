@@ -18,7 +18,7 @@ export function SidebarContent({ className }: SidebarContentProps) {
 
     const links = [
         { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-        { href: '/dashboard/chat/new', label: 'New Study Session', icon: MessageSquarePlus },
+        // { href: '/dashboard/chat/new', label: 'New Study Session', icon: MessageSquarePlus },
         { href: '/dashboard/chats', label: 'My Chats', icon: MessageSquare },
         { href: '/dashboard/decks', label: 'My Decks', icon: FileText },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },

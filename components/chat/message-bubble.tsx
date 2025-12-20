@@ -29,11 +29,21 @@ export function MessageBubble({ role, content, sources }: MessageBubbleProps) {
                 {sources && sources.length > 0 && (
                     <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
                         <p className="font-semibold mb-1">Sources:</p>
-                        <div className="flex flex-wrap gap-2">
-                            {sources.map((s, i) => (
-                                <span key={i} className="bg-background border px-1.5 py-0.5 rounded">
-                                    Slide {s.slide_number}
-                                </span>
+                        <div className="flex flex-col gap-1.5">
+                            {Object.entries((sources || []).reduce((acc: Record<string, number[]>, source) => {
+                                const key = source.filename || 'Unknown File';
+                                if (!acc[key]) acc[key] = [];
+                                if (!acc[key].includes(source.slide_number)) {
+                                    acc[key].push(source.slide_number);
+                                }
+                                return acc;
+                            }, {})).map(([filename, slides], i) => (
+                                <div key={i} className="text-xs text-muted-foreground">
+                                    <span className="font-semibold text-primary/80 mr-1">[{filename}]:</span>
+                                    <span>
+                                        {(slides as number[]).sort((a, b) => a - b).map(num => `Slide ${num}`).join(', ')}
+                                    </span>
+                                </div>
                             ))}
                         </div>
                     </div>
