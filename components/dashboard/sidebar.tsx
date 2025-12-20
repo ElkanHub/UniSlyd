@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { UsageBanner } from '@/components/dashboard/usage-banner'
 import { signOut } from '@/app/(auth)/actions'
 import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText, MessageSquare } from 'lucide-react'
+import { ModeToggle } from '@/components/ui/mode-toggle'
 
 export function Sidebar() {
     const pathname = usePathname()
@@ -47,7 +48,11 @@ export function Sidebar() {
 
             <div className="mt-auto">
                 <UsageBanner />
-                <div className="p-4 border-t">
+                <div className="p-4 border-t space-y-2">
+                    <div className="flex items-center justify-between px-2">
+                        <span className="text-xs font-medium text-muted-foreground">Theme</span>
+                        <ModeToggle />
+                    </div>
                     <form action={signOut}>
                         <Button variant="outline" className="w-full gap-2 text-muted-foreground" size="sm">
                             <LogOut className="w-4 h-4" />

@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import QueryProvider from "@/components/providers/query-provider"
+import ThemeProvider from "@/components/providers/theme-provider"
 
 export default function RootLayout({
   children,
@@ -30,7 +31,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
         </QueryProvider>
       </body>
     </html>
