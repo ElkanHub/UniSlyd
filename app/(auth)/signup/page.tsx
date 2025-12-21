@@ -9,7 +9,9 @@ export default function SignupPage({ searchParams }: { searchParams: { error?: s
         <div className="flex h-screen w-full items-center justify-center bg-muted/20">
             <div className="mx-auto grid w-[350px] gap-6 p-6 border rounded-xl bg-background shadow-sm">
                 <div className="grid gap-2 text-center">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">Unislyd</h1>
+                    <Link href="/" className="flex items-center justify-center space-x-2">
+                        <span className="font-bold text-2xl tracking-tight bg-primary bg-clip-text text-transparent">UniSlyd</span>
+                    </Link>
                     <p className="text-balance text-muted-foreground">
                         Create an account to start
                     </p>
