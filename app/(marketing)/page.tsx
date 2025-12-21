@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/scroll-based-velocity";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog" 
+import { AnimatedBeamMultipleOutput } from "@/components/ui/animatedBeam";
 
 export default function StudyAILanding() {
     return (

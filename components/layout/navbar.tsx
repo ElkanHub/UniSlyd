@@ -24,10 +24,10 @@ export function Navbar() {
             <div className="container mx-auto flex h-16 items-center justify-between">
                 <div className="flex items-center gap-6">
                     <Link href="/" className="flex items-center space-x-2">
-                        <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">Unislyd</span>
+                        <span className="font-bold text-xl tracking-tight bg-primary bg-clip-text text-transparent">UniSlyd</span>
                     </Link>
                     <nav className="hidden md:flex gap-6 text-sm font-medium">
-                        <Link href="#features" className="transition-colors hover:text-foreground/80 text-foreground/60">Features</Link>
+                        <Link href="/features" className="transition-colors hover:text-foreground/80 text-foreground/60">Features</Link>
                         <Link href="#pricing" className="transition-colors hover:text-foreground/80 text-foreground/60">Pricing</Link>
                     </nav>
                 </div>

@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Unislyd
 
-## Getting Started
+**Unislyd** is a modern AI-powered study companion designed specifically for university students. It transforms your lecture slides into an interactive knowledge base, allowing you to "chat" with your course material, extract key summaries, and study more effectively.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+-   **📚 Smart Slide Ingestion**: Upload your lecture slides (PPTX, PDF). Unislyd extracts text, understands the structure, and indexes the content for AI processing.
+-   **🤖 Conversational AI Tutor**: Chat with your slides! Ask questions, get definitions, and request summaries grounded in your actual course material—no hallucinations.
+-   **📝 Study Organization**: Keep all your decks organized in a centralized dashboard.
+-   **🔎 Vector Search Power**: Built on PostgreSQL with `pgvector` for accurate semantic retrieval of information.
+-   **🔐 Secure & Private**: Your study materials are processed securely.
+
+## 🛠️ Tech Stack
+
+-   **Frontend**: [Next.js 16](https://nextjs.org/) (App Router), TypeScript, [Tailwind CSS v4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/).
+-   **Backend**: [Supabase](https://supabase.com/) (Auth, Database, Storage).
+-   **AI & ML**: OpenAI (Embeddings), Groq (LLM Inference).
+-   **Database**: PostgreSQL + `pgvector`.
+
+## 🏁 Getting Started
+
+Follow these steps to set up the project locally.
+
+### Prerequisites
+
+-   Node.js (v20+ recommended)
+-   npm or pnpm
+-   A [Supabase](https://supabase.com/) Project
+-   API Keys for OpenAI and Groq
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/ElkanHub/UniSlyd.git
+    cd slyd
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Environment Variables**
+    Create a `.env.local` file in the root directory and add your keys:
+    ```bash
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    OPENAI_API_KEY=your_openai_api_key
+    GROQ_API_KEY=your_groq_api_key
+    ```
+
+4.  **Run the development server**
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 📂 Project Structure
+
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+slyd/
+├── app/                    # Next.js App Router & API Routes
+├── components/             # React Components (UI, Dashboard, Chat)
+├── lib/                    # Utilities, Supabase client, Helper functions
+├── public/                 # Static assets
+└── types/                  # TypeScript definitions
+```
