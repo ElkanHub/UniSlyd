@@ -39,11 +39,11 @@ export default function StudyAILanding() {
                         Upload your lectures and get answers sourced <strong>only</strong> from what your professor actually taught.
                     </p>
 
-                    {/* 4. SHIMMER BUTTON - The high-conversion CTA */}
+                    {/* 4. INTERACTIVE HOVER BUTTON - The high-conversion CTA */}
                     <div className="flex flex-col sm:flex-row gap-4 mt-4">
                         <Link href="/signup">
                             <InteractiveHoverButton>
-                                <span className="text-center text-sm font-semibold leading-none tracking-tight text-white dark:from-white dark:to-slate-900/10 lg:text-lg">
+                                <span className="text-center text-sm font-semibold leading-none tracking-tight text-black dark:from-black dark:to-slate-900/10 lg:text-lg">
                                     Start Studying for Free
                                 </span>
                             </InteractiveHoverButton>
@@ -75,7 +75,7 @@ export default function StudyAILanding() {
             </div>
 
             {/* Relatable Content Section */}
-            <section className="container mx-auto py-24 space-y-16">
+            <section id="how-it-works" className="container mx-auto py-24 space-y-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div className="space-y-4">
                         <h2 className="text-3xl md:text-5xl font-bold">Built for the way you actually study.</h2>
