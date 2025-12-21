@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/scroll-based-velocity";
 import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
+import { HeroVideoDialog } from "@/components/ui/hero-video-dialog" 
 
 export default function StudyAILanding() {
     return (
@@ -69,7 +70,7 @@ export default function StudyAILanding() {
                         No more CTRL+F nightmares • Sourced from your slides • Exam-accurate answers •
                     </ScrollVelocityRow>
                     <ScrollVelocityRow baseVelocity={3} direction={-1}>
-                         PDF • TXT • PPTX • DOCX •
+                        PDF • TXT • PPTX • DOCX •
                     </ScrollVelocityRow>
                 </ScrollVelocityContainer>
             </div>
@@ -95,9 +96,21 @@ export default function StudyAILanding() {
                         </ul>
                     </div>
                     <div className="aspect-video rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 border-2 border-dashed flex items-center justify-center">
-                        {/* This would be where you place an image or video of the tool */}
-                        <p className="text-muted-foreground font-mono">[ Interactive UI Preview ]</p>
-                    </div>
+                        <HeroVideoDialog
+                            className="block dark:hidden"
+                            animationStyle="from-center"
+                            videoSrc="https://www.youtube.com/embed/qh3NGpYRG3I?si=4rb-zSdDkVK9qxxb"
+                            thumbnailSrc="https://startup-template-sage.vercel.app/hero-light.png"
+                            thumbnailAlt="Hero Video"
+                        />
+                        <HeroVideoDialog
+                            className="hidden dark:block"
+                            animationStyle="from-center"
+                            videoSrc="https://www.youtube.com/embed/qh3NGpYRG3I?si=4rb-zSdDkVK9qxxb"
+                            thumbnailSrc="https://startup-template-sage.vercel.app/hero-dark.png"
+                            thumbnailAlt="Hero Video"
+                        />
+                        </div>
                 </div>
             </section>
         </div>

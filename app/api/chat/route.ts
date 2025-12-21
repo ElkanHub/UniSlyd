@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
         const supabase = await createClient()
         const { message, conversationId, examMode } = await req.json()
 
+        const logDate = new Date()
+
         // 1. Auth check
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
 
         if (fullContextMatch && filterDeckId) {
             console.log(`[Chat] Detected full context intent. Fetching all slides for deck: ${filterDeckId}`)
-            
+
             // Fetch all slides (remove limit or set very high to get full potential content first, then truncate reliably)
             // Or keep limit 100 if we assume 100 slides is safe-ish, but let's be smarter.
             // Let's limit to 300 to capture really long decks, then truncate tokens.
@@ -98,13 +100,13 @@ export async function POST(req: NextRequest) {
                 .select('*')
                 .eq('deck_id', filterDeckId)
                 .order('slide_number', { ascending: true })
-                .limit(300) 
+                .limit(300)
 
             if (!allSlidesError && allSlides) {
                 // Token Management Strategy
                 // Groq Free Tier has strict TPM limits (e.g. 8000 TPM). 
                 // We must stay well below this. 
-                const SAFE_TOKEN_LIMIT = 6000 
+                const SAFE_TOKEN_LIMIT = 6000
                 let currentTokens = 0
                 let truncatedSlides: any[] = []
                 let truncated = false
@@ -239,26 +241,21 @@ GENERAL MODE:
 `}
     `
 
-        // 5. Generate with Groq
+        // 5. Generate with Groq (Streaming)
         const completion = await groq.chat.completions.create({
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: message }
             ],
-            model: "openai/gpt-oss-120b", // High performance open model
+            model: "openai/gpt-oss-120b",
             temperature: examMode ? 0.3 : 0.7,
             max_tokens: 1024,
+            stream: true, // Enable streaming
         });
 
-        const reply = completion.choices[0]?.message?.content || "No response generated."
-
-        // 6. Save Message & Usage (Async)
-        // In a real app, use waitUntil or fire-and-forget
-        await supabase.from('messages').insert({
-            conversation_id: conversationId,
-            role: 'user',
-            content: message
-        })
+        // 6. Create a ReadableStream
+        const encoder = new TextEncoder()
+        let fullResponse = ""
 
         // Construct sources metadata
         const sources = finalChunks.map((c: any) => ({
@@ -268,64 +265,80 @@ GENERAL MODE:
             filename: deckFilename
         }))
 
+        const stream = new ReadableStream({
+            async start(controller) {
+                try {
+                    for await (const chunk of completion) {
+                        const content = chunk.choices[0]?.delta?.content || ""
+                        if (content) {
+                            fullResponse += content
+                            controller.enqueue(encoder.encode(content))
+                        }
+                    }
+                } catch (err) {
+                    console.error("Streaming error:", err)
+                    controller.error(err)
+                } finally {
+                    controller.close()
+
+                    // 7. Save Message & Usage (After stream completes)
+                    // Note: In serverless (Vercel), you might need `waitUntil` or similar if this gets cut off.
+                    // For standard Node/VPS, this usually runs fine. 
+                    try {
+                        const { error: msgError } = await supabase.from('messages').insert({
+                            conversation_id: conversationId,
+                            role: 'assistant',
+                            content: fullResponse || "No response generated.", // Fallback
+                            sources: sources
+                        })
+
+                        if (msgError) console.error("Failed to save AI message:", msgError)
+
+                        // Update usage
+                        await supabase.from('usage_logs').insert({
+                            user_id: user.id,
+                            metric: 'chat_turn',
+                            count: 1, // Increment count for chat turn
+                            bucket_month: logDate.toISOString().slice(0, 7) + '-01'
+                        })
+
+                    } catch (dbErr) {
+                        console.error("Post-stream DB save failed:", dbErr)
+                    }
+                }
+            }
+        })
+
+        // Save USER message first (sync) to ensure order
         await supabase.from('messages').insert({
             conversation_id: conversationId,
-            role: 'assistant',
-            content: reply,
-            sources: sources
+            role: 'user',
+            content: message
+        })
+
+        // Return the stream with sources header
+        // We base64 encode sources to ensure it passes safely in headers
+        const sourcesHeader = Buffer.from(JSON.stringify(sources)).toString('base64')
+
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'x-sources': sourcesHeader
+            }
         })
 
 
 
-        // -- LOG USAGE --
-        // Use Service Role if available to bypass RLS/Policies that might block INSERT
-        // or just to ensure it works reliably in the background.
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        // Note: Usage logging and message saving for the assistant are now handled INSIDE the stream completion block above.
+        // User message saving is handled before the stream starts.
 
-        // Calculate bucket_month (first day of current month)
+        // Auto-generate title could be triggered here if we didn't need the reply content, 
+        // but since we usually use the first few messages, we might trigger it separately or 
+        // in the stream completion block if we want to use the AI's reply.
+        // For now, simpler to just skip it or trigger off user message only.
 
-        const logDate = new Date()
-        const bucketMonth = new Date(logDate.getFullYear(), logDate.getMonth(), 1).toISOString().split('T')[0]
-
-        if (serviceRoleKey) {
-            const adminClient = createSupabaseClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                serviceRoleKey,
-                {
-                    auth: {
-                        autoRefreshToken: false,
-                        persistSession: false
-                    }
-                }
-            )
-            const { error: usageError } = await adminClient.from('usage_logs').insert({
-                user_id: user.id,
-                metric: 'query',
-                count: 1,
-                bucket_month: bucketMonth
-            })
-            if (usageError) console.error("Usage Log Error (Admin):", usageError)
-        } else {
-            // Fallback to user client
-            const { error: usageError } = await supabase.from('usage_logs').insert({
-                user_id: user.id,
-                metric: 'query',
-                count: 1,
-                bucket_month: bucketMonth
-            })
-            if (usageError) console.error("Usage Log Error (User):", usageError)
-        }
-
-        // 7. Auto-generate Title if needed
-        // We run this without awaiting to speed up response? 
-        // Note: In serverless, unawaited promises can be killed. 
-        // Ideally use `waitUntil` from vercel/functions or just await it. 
-        // For robustness here, we will await it but use a Promise.all or just await.
-        // Given Llama3-8b is super fast, let's just await it to be safe.
-        await updateConversationTitle(conversationId, message, reply)
-
-
-        return NextResponse.json({ reply, sources })
 
     } catch (error) {
         console.error('Chat API Error:', error)
