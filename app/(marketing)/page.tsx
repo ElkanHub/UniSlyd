@@ -6,7 +6,6 @@ import {
     ScrollVelocityContainer,
     ScrollVelocityRow,
 } from "@/components/ui/scroll-based-velocity";
-import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
 import { HeroVideoDialog } from "@/components/ui/hero-video-dialog" 
 
