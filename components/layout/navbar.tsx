@@ -53,7 +53,7 @@ export function Navbar() {
             {isOpen && (
                 <div className="md:hidden border-t p-4 bg-background">
                     <nav className="flex flex-col gap-4 text-sm">
-                        <Link href="#features" className="text-foreground/60 hover:text-foreground">Features</Link>
+                        <Link href="/features" className="text-foreground/60 hover:text-foreground">Features</Link>
                         <Link href="#pricing" className="text-foreground/60 hover:text-foreground">Pricing</Link>
                         <div className="border-t my-2" />
                         <Link href="/login" className="font-medium">Log in</Link>
