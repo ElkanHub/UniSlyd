@@ -7,6 +7,7 @@ import {
     ScrollVelocityRow,
 } from "@/components/ui/scroll-based-velocity";
 import { ShimmerButton } from "@/components/ui/shimmer-button"
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
 
 export default function StudyAILanding() {
     return (
@@ -15,7 +16,7 @@ export default function StudyAILanding() {
             {/* <ScrollProgress className="top-0 h-1 bg-primary" /> */}
 
             <section className="relative space-y-8 pb-12 pt-16 md:pb-20 md:pt-24 lg:py-32">
-                <div className="container flex max-w-[66rem] flex-col items-center gap-6 text-center">
+                <div className="container mx-auto flex max-w-[66rem] flex-col items-center gap-6 text-center">
 
                     {/* 2. TEXT ANIMATE (Blur In) - The first thing they see */}
                     <TextAnimate animation="blurIn" as="h1" className="text-sm font-semibold tracking-widest uppercase text-primary/80"
@@ -41,14 +42,14 @@ export default function StudyAILanding() {
                     {/* 4. SHIMMER BUTTON - The high-conversion CTA */}
                     <div className="flex flex-col sm:flex-row gap-4 mt-4">
                         <Link href="/signup">
-                            <ShimmerButton className="border-2 shadow-2xl transition-transform hover:scale-105">
+                            <InteractiveHoverButton>
                                 <span className="text-center text-sm font-semibold leading-none tracking-tight text-white dark:from-white dark:to-slate-900/10 lg:text-lg">
                                     Start Studying for Free
                                 </span>
-                            </ShimmerButton>
+                            </InteractiveHoverButton>
                         </Link>
                         <Link href="#how-it-works">
-                            <Button size="lg" variant="ghost" className="rounded-full underline">
+                            <Button size="lg" variant="outline" className="rounded-full">
                                 See it in action
                             </Button>
                         </Link>
@@ -65,16 +66,16 @@ export default function StudyAILanding() {
                 /> */}
                 <ScrollVelocityContainer className="text-4xl font-bold md:text-7xl">
                     <ScrollVelocityRow baseVelocity={3} direction={1}>
-                        No more CTRL+F nightmares • Exam-accurate answers •
+                        No more CTRL+F nightmares • Sourced from your slides • Exam-accurate answers •
                     </ScrollVelocityRow>
                     <ScrollVelocityRow baseVelocity={3} direction={-1}>
-                        Sourced from your slides • Study smarter, not longer •
+                         PDF • TXT • PPTX • DOCX •
                     </ScrollVelocityRow>
                 </ScrollVelocityContainer>
             </div>
 
             {/* Relatable Content Section */}
-            <section className="container py-24 space-y-16">
+            <section className="container mx-auto py-24 space-y-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div className="space-y-4">
                         <h2 className="text-3xl md:text-5xl font-bold">Built for the way you actually study.</h2>
@@ -86,7 +87,7 @@ export default function StudyAILanding() {
                                 <span className="text-primary">✓</span> "Where did the prof mention the Krebs cycle?"
                             </li>
                             <li className="flex items-center gap-2">
-                                <span className="text-primary">✓</span> "Summarize week 4 slides into 5 bullet points."
+                                <span className="text-primary">✓</span> "Summarize Slide 10 into 5 bullet points."
                             </li>
                             <li className="flex items-center gap-2">
                                 <span className="text-primary">✓</span> "Create a practice quiz from this PDF."

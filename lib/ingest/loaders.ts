@@ -67,10 +67,28 @@ async function parsePDF(buffer: Buffer) {
     }
 }
 
+import TurndownService from 'turndown'
+
 async function parseDOCX(buffer: Buffer) {
-    const result = await mammoth.extractRawText({ buffer })
+    // 1. Convert to HTML to preserve structure (headers, lists, etc.)
+    const { value: html, messages } = await mammoth.convertToHtml({ buffer })
+
+    // Log warnings if any
+    if (messages.length > 0) {
+        console.log("Mammoth Messages:", messages)
+    }
+
+    // 2. Convert HTML to Markdown
+    const turndownService = new TurndownService({
+        headingStyle: 'atx',
+        bulletListMarker: '-',
+        codeBlockStyle: 'fenced'
+    })
+
+    const markdown = turndownService.turndown(html)
+
     return {
-        text: result.value,
+        text: markdown,
         metadata: {}
     }
 }
