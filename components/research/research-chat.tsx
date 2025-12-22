@@ -108,13 +108,7 @@ export function ResearchChat({ sessionId, initialMessages }: ResearchChatProps) 
     }
 
     return (
-        <div className="flex flex-col h-full bg-background border-l min-w-0">
-            <div className="p-3 border-b flex items-center justify-between bg-muted/20">
-                <span className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-500" />
-                    Research Assistant
-                </span>
-            </div>
+        <div className="flex flex-col h-full bg-background mt-4">
 
             <div
                 ref={scrollRef}
