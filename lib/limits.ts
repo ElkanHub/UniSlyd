@@ -3,10 +3,12 @@ export const RATE_LIMITS = {
         MAX_DECKS: 5,
         MAX_QUERIES_PER_DAY: 20,
         MAX_QUERIES_PER_MONTH: 300,
+        RESEARCH_DAILY_LIMIT: 50,
     },
     PRO: {
         MAX_DECKS: Infinity,
         MAX_QUERIES_PER_DAY: 500,
         MAX_QUERIES_PER_MONTH: 10000,
+        RESEARCH_DAILY_LIMIT: 1000,
     }
 } as const

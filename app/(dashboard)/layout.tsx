@@ -14,8 +14,8 @@ export default function DashboardLayout({
                     <span className="font-bold text-lg">Unislyd</span>
                     <MobileSidebar />
                 </div>
-                <main className="flex-1 overflow-y-auto">
-                    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <main className="flex-1 overflow-y-auto flex flex-col">
+                    <div className="flex-1 flex flex-col h-full p-4 md:p-8 pt-6">
                         {children}
                     </div>
                 </main>
