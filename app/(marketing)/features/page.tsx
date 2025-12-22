@@ -20,15 +20,15 @@ import { cn } from "@/lib/utils"
 import { DotPattern } from "@/components/ui/dot-pattern"
 import { WordRotate } from '@/components/ui/word-rotate';
 import { BorderBeam } from "@/components/ui/border-beam"
+import { LightRays } from "@/components/ui/light-rays"
 
 export default function UnislydFeatures() {
     return (
         <div className="flex flex-col min-h-screen bg-background">
-
-
+            <LightRays />
 
             {/* --- KEY FEATURES SECTION --- */}
-            <section className="container mx-auto px-4 py-24">
+            <section className="z-10 container mx-auto px-4 py-24">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl font-bold mb-4 inline-block">Powerful Features for <WordRotate words={["Serious", "University"]} /> Students
                     </h2>

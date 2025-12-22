@@ -1,7 +1,11 @@
-import { cn } from "@/lib/utils"
+"use client";
+
+import { cn, stripMarkdown } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Markdown } from "@/components/ui/markdown"
-
+import { useState } from "react"
+import { Copy, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 
 interface MessageBubbleProps {
@@ -11,6 +15,19 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ role, content, sources }: MessageBubbleProps) {
+    const [isCopied, setIsCopied] = useState(false)
+
+    const handleCopy = async () => {
+        try {
+            const cleanText = stripMarkdown(content)
+            await navigator.clipboard.writeText(cleanText)
+            setIsCopied(true)
+            setTimeout(() => setIsCopied(false), 2000)
+        } catch (err) {
+            console.error('Failed to copy text: ', err)
+        }
+    }
+
     return (
         <div className={cn(
             "flex w-full gap-4 p-4",
@@ -20,8 +37,26 @@ export function MessageBubble({ role, content, sources }: MessageBubbleProps) {
                 <AvatarFallback>{role === 'user' ? 'U' : 'AI'}</AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-2">
-                <div className="font-semibold text-sm">
-                    {role === 'user' ? 'You' : 'Unislyd'}
+                <div className="flex items-center justify-between">
+                    <div className="font-semibold text-sm">
+                        {role === 'user' ? 'You' : 'Unislyd'}
+                    </div>
+                    {role === 'assistant' && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={handleCopy}
+                            title="Copy to clipboard"
+                        >
+                            {isCopied ? (
+                                <Check className="h-3.5 w-3.5" />
+                            ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                            )}
+                            <span className="sr-only">Copy message</span>
+                        </Button>
+                    )}
                 </div>
                 <div className="text-sm leading-relaxed text-foreground/90">
                     <Markdown>{content}</Markdown>

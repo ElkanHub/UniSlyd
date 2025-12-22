@@ -7,15 +7,14 @@ import {
     ScrollVelocityRow,
 } from "@/components/ui/scroll-based-velocity";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button"
-import { HeroVideoDialog } from "@/components/ui/hero-video-dialog" 
-import { AnimatedBeamMultipleOutput } from "@/components/ui/animatedBeam";
-
+import { HeroVideoDialog } from "@/components/ui/hero-video-dialog"
+import { LightRays } from "@/components/ui/light-rays"
 export default function StudyAILanding() {
     return (
         <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
             {/* 1. SCROLL PROGRESS - Shows the user their "study progress" through the page */}
             {/* <ScrollProgress className="top-0 h-1 bg-primary" /> */}
-
+            <LightRays />
             <section className="relative space-y-8 pb-12 pt-16 md:pb-20 md:pt-24 lg:py-32">
                 <div className="container mx-auto flex max-w-[66rem] flex-col items-center gap-6 text-center">
 
@@ -44,7 +43,7 @@ export default function StudyAILanding() {
                     <div className="flex flex-col sm:flex-row gap-4 mt-4">
                         <Link href="/signup">
                             <InteractiveHoverButton>
-                                <span className="text-center text-sm font-semibold leading-none tracking-tight text-black dark:from-black dark:to-slate-900/10 lg:text-lg">
+                                <span className="text-center text-sm font-semibold leading-none tracking-tight text-black dark:text-white dark:from-black dark:to-white/10 lg:text-lg">
                                     Start Studying for Free
                                 </span>
                             </InteractiveHoverButton>
@@ -66,8 +65,8 @@ export default function StudyAILanding() {
                     className="font-display text-center text-2xl font-bold tracking-[-0.02em] text-primary/20 md:text-5xl md:leading-[5rem]"
                 /> */}
                 <ScrollVelocityContainer className="text-4xl font-bold md:text-7xl">
-                    <ScrollVelocityRow baseVelocity={3} direction={1}>
-                        No more CTRL+F nightmares • Sourced from your slides • Exam-accurate answers •
+                    <ScrollVelocityRow baseVelocity={3.5} direction={1}>
+                        No more CTRL+F nightmares • Sourced from your slides • Exam-accurate answers • University Students •
                     </ScrollVelocityRow>
                     <ScrollVelocityRow baseVelocity={3} direction={-1}>
                         PDF • TXT • PPTX • DOCX •
@@ -110,7 +109,7 @@ export default function StudyAILanding() {
                             thumbnailSrc="https://startup-template-sage.vercel.app/hero-dark.png"
                             thumbnailAlt="Hero Video"
                         />
-                        </div>
+                    </div>
                 </div>
             </section>
         </div>

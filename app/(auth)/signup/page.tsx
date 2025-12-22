@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from 'next/link'
+import { LightRays } from "@/components/ui/light-rays"
 
 export default function SignupPage({ searchParams }: { searchParams: { error?: string, message?: string } }) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-muted/20">
-            <div className="mx-auto grid w-[350px] gap-6 p-6 border rounded-xl bg-background shadow-sm">
+            <LightRays />
+            <div className="z-10 mx-auto grid w-[350px] gap-6 p-6 border rounded-xl bg-background shadow-sm">
                 <div className="grid gap-2 text-center">
                     <Link href="/" className="flex items-center justify-center space-x-2">
                         <span className="font-bold text-2xl tracking-tight bg-primary bg-clip-text text-transparent">UniSlyd</span>
