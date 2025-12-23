@@ -22,9 +22,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { deleteResearchSession, renameResearchSession } from "@/app/actions/research"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 // PDF generation will be handled in a separate utility or dynamically imported
 // import { generatePDF } from "@/lib/pdf-utils" 
+
+// Dynamic import of the downloader to avoid Turbopack/Build issues with @react-pdf/renderer
+import dynamic from "next/dynamic"
+
+const PdfDownloader = dynamic(() => import("./pdf-downloader"), {
+    ssr: false,
+})
 
 interface ResearchRowProps {
     session: any
@@ -35,6 +43,9 @@ export function ResearchRow({ session }: ResearchRowProps) {
     const [newName, setNewName] = useState(session.title)
     const [isDeleting, setIsDeleting] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+
+    // State to trigger the hidden downloader component
+    const [isDownloading, setIsDownloading] = useState(false)
 
     const handleRename = async () => {
         if (!newName.trim() || newName === session.title) {
@@ -65,9 +76,18 @@ export function ResearchRow({ session }: ResearchRowProps) {
     }
 
     const handleDownload = () => {
-        // Implementation for PDF download
-        // Likely redirecting to a print view or using client-side lib
-        window.open(`/dashboard/research/${session.id}/read?print=true`, '_blank')
+        toast.info("Generating PDF...")
+        setIsDownloading(true)
+    }
+
+    const handleDownloadComplete = () => {
+        toast.success("PDF Downloaded successfully")
+        setIsDownloading(false)
+    }
+
+    const handleDownloadError = () => {
+        toast.error("Failed to generate PDF")
+        setIsDownloading(false)
     }
 
     return (
@@ -143,6 +163,7 @@ export function ResearchRow({ session }: ResearchRowProps) {
 
             {/* Delete Dialog */}
             <Dialog open={isDeleting} onOpenChange={setIsDeleting}>
+                {/* ... Dialog Content ... */}
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Delete Session</DialogTitle>
@@ -158,6 +179,14 @@ export function ResearchRow({ session }: ResearchRowProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {isDownloading && (
+                <PdfDownloader
+                    session={session}
+                    onComplete={handleDownloadComplete}
+                    onError={handleDownloadError}
+                />
+            )}
         </div>
     )
 }
