@@ -27,7 +27,7 @@ export function ResearchEditor({ sessionId, initialContent }: ResearchEditorProp
         content: initialContent || {},
         editorProps: {
             attributes: {
-                class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[calc(100vh-200px)] p-8',
+                class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[calc(100vh-200px)] p-4 md:p-8',
             },
         },
         onUpdate: ({ editor }) => {

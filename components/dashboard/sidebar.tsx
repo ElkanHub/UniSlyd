@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { UsageBanner } from '@/components/dashboard/usage-banner'
 import { signOut } from '@/app/(auth)/actions'
-import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, MessageSquarePlus, Settings, LogOut, FileText, MessageSquare, BookSearch } from 'lucide-react'
 import { ModeToggle } from '@/components/ui/mode-toggle'
 
 interface SidebarContentProps {
@@ -22,6 +22,7 @@ export function SidebarContent({ className }: SidebarContentProps) {
         { href: '/dashboard/chats', label: 'My Chats', icon: MessageSquare },
         { href: '/dashboard/decks', label: 'My Decks', icon: FileText },
         { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+        { href: '/dashboard/research', label: 'Research Zone', icon: BookSearch },
     ]
 
     return (

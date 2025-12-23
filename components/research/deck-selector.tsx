@@ -56,15 +56,15 @@ export function DeckSelector({ sessionId, initialSelectedDeckIds, availableDecks
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-nowrap items-center gap-2 overflow-x-auto scrollbar-hide mask-fade-right">
                 {selectedDecks.map(deck => (
-                    <Badge key={deck.id} variant="secondary" className="pl-2 pr-1 h-7 text-xs flex items-center gap-1">
-                        <FileText className="w-3 h-3 opacity-70" />
-                        <span className="max-w-[150px] truncate">{deck.filename}</span>
+                    <Badge key={deck.id} variant="secondary" className="pl-2 pr-1 h-7 text-xs flex items-center gap-1 shrink-0 max-w-[120px] md:max-w-[200px]">
+                        <FileText className="w-3 h-3 opacity-70 shrink-0" />
+                        <span className="truncate">{deck.filename}</span>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-4 w-4 ml-1 rounded-full hover:bg-muted-foreground/20"
+                            className="h-4 w-4 ml-1 rounded-full hover:bg-muted-foreground/20 shrink-0"
                             onClick={() => {
                                 // Immediate remove logic? Or just open modal?
                                 // Let's do immediate optimistic update for UX
@@ -80,9 +80,9 @@ export function DeckSelector({ sessionId, initialSelectedDeckIds, availableDecks
 
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 text-xs border-dashed gap-1">
+                        <Button variant="outline" size="sm" className="h-7 text-xs border-dashed gap-1 shrink-0">
                             <Plus className="w-3.5 h-3.5" />
-                            Sources
+                            <span className="hidden sm:inline">Sources</span>
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
