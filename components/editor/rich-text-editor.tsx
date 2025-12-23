@@ -23,9 +23,10 @@ import { cn } from '@/lib/utils'
 
 interface RichTextEditorProps {
     content: any
-    onChange: (content: any) => void
+    onChange?: (content: any) => void
     placeholder?: string
     readOnly?: boolean
+    className?: string
 }
 
 export function RichTextEditor({ content, onChange, placeholder, className, readOnly = false }: RichTextEditorProps) {
@@ -70,7 +71,7 @@ export function RichTextEditor({ content, onChange, placeholder, className, read
             },
         },
         onUpdate: ({ editor }) => {
-            onChange(editor.getJSON())
+            onChange?.(editor.getJSON())
         },
     })
 
