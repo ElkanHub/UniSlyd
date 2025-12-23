@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
 
         // --- RATE LIMIT CHECK (Research Specific) ---
         const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
-        // Default to FREE if no profile found, though that shouldn't happen for valid users
         const userTier = (profile?.tier === 'pro' || profile?.tier === 'pro_plus') ? 'PRO' : 'FREE'
         const limits = RATE_LIMITS[userTier]
 
@@ -33,12 +32,11 @@ export async function POST(req: NextRequest) {
             .from('usage_logs')
             .select('count')
             .eq('user_id', user.id)
-            .eq('metric', 'research_turn') // Distinct metric for research
+            .eq('metric', 'research_turn')
             .gte('created_at', startOfDay)
 
         const dailyCount = dailyLog ? dailyLog.reduce((acc, curr) => acc + curr.count, 0) : 0
 
-        // Research limit check
         if (dailyCount >= limits.RESEARCH_DAILY_LIMIT) {
             return NextResponse.json(
                 { error: `Research daily limit reached (${limits.RESEARCH_DAILY_LIMIT}). Upgrade to Pro for more.` },
@@ -47,7 +45,7 @@ export async function POST(req: NextRequest) {
         }
         // --- END LIMIT CHECK ---
 
-        // 2. Fetch Research Session to get locked Context (Selected Decks)
+        // 2. Fetch Research Session to get locked Context
         const { data: session } = await supabase
             .from('research_sessions')
             .select('selected_deck_ids')
@@ -63,50 +61,55 @@ export async function POST(req: NextRequest) {
 
         const selectedDeckIds = session.selected_deck_ids
 
+        // 2.1 Fetch Deck Filenames for Metadata
+        const { data: decksMetadata } = await supabase
+            .from('decks')
+            .select('id, filename')
+            .in('id', selectedDeckIds)
+
+        const deckMap = new Map<string, string>()
+        decksMetadata?.forEach((d: any) => deckMap.set(d.id, d.filename))
+
         // 3. Embed Query
         const queryEmbedding = await generateEmbedding(message)
 
-        // 4. Scoped Vector Search
-        // We need to match chunks ONLY from the selected decks.
-        // We'll use the existing `match_slides` RPC but we might need to filter manually or update the RPC.
-        // The current `match_slides` usually takes a single `filter_deck_id`.
-        // Ideally we update the RPC to accept an array unique `filter_deck_ids`.
-        // FOR NOW: We will implement a client-side filter fallback or loop if the RPC doesn't support arrays yet.
-        // CHECK: Does `match_slides` support arrays? Usually no.
-        // OPTION: We run the RPC without deck filter and filter in code (inefficient if many users),
-        // OR we create/use a `match_slides_multiple` RPC.
-        // 
-        // Let's assume we need to fetch relevant chunks for EACH deck? No, that's too many requests.
-        // Best approach without new migration: Use Supabase JS `rpc` with customized query if possible, or...
-        // Wait, pgvector usually allows filtering.
-        // Let's try to query `slide_chunks` directly using the embedding similarity order if possible within Supabase client? 
-        // Supabase JS doesn't do vector math easily without RPC.
-        // 
-        // WORKAROUND: We will fetch top chunks for *each* deck (up to 3 per deck) to ensure balanced context, 
-        // then re-rank or flatten. This ensures multi-deck context.
-        // LIMIT: If user has 10 decks, that's 30 chunks. Too many tokens? 
-        // Let's cap total decks processed or just take the first 5 active ones? 
-        // The plan said "Max recommended 5-10". 
+        // 3.1 Check for specific slide intent (Hybrid Search)
+        // Matches "slide 5", "slide #5"
+        const slideMatch = message.match(/slide\s+#?(\d+)/i)
+        let specificSlideChunks: any[] = []
 
+        if (slideMatch) {
+            const slideNum = parseInt(slideMatch[1])
+            console.log(`[Research] Detected specific slide intent: Slide ${slideNum}`)
+
+            const { data: slides } = await supabase
+                .from('slide_chunks')
+                .select('*')
+                .in('deck_id', selectedDeckIds)
+                .eq('slide_number', slideNum)
+                .limit(10)
+
+            if (slides) specificSlideChunks = slides
+        }
+
+        // 4. Scoped Vector Search
         let allChunks: any[] = []
 
-        // Parallel fetch for selected decks (up to 5 to avoid timeouts)
-        // detailed "multi-deck" hybrid search
-        const decksToQuery = selectedDeckIds.slice(0, 5) // Cap at 5 decks for query performance
+        // Parallel fetch for selected decks (search all selected, or cap if too many)
+        const decksToQuery = selectedDeckIds.slice(0, 5)
 
         const promises = decksToQuery.map(async (deckId: string) => {
-            // We use the existing RPC but filtered to this specific deck
             const { data: chunks } = await supabase.rpc('match_slides', {
                 query_embedding: queryEmbedding,
-                match_threshold: 0.5,
-                match_count: 4, // 4 chunks per deck
+                match_threshold: 0.1, // Low threshold for broad context
+                match_count: 6,
                 filter_deck_id: deckId
             })
             return chunks || []
         })
 
         const results = await Promise.all(promises)
-        allChunks = results.flat()
+        allChunks = [...specificSlideChunks, ...results.flat()]
 
         // Deduplicate
         const uniqueMap = new Map()
@@ -115,17 +118,15 @@ export async function POST(req: NextRequest) {
                 uniqueMap.set(chunk.id, chunk)
             }
         })
-
-        // Sort by similarity match? The RPC returns distinct sets. 
-        // We might just take them all if token count permits.
         const finalChunks = Array.from(uniqueMap.values())
 
 
         // 5. Construct Prompt
         const contextText = finalChunks.length > 0
-            ? finalChunks.map((chunk: any) =>
-                `[Deck: ${chunk.deck_id?.slice(0, 5)}... Slide ${chunk.slide_number}]: ${chunk.content}`
-            ).join('\n\n')
+            ? finalChunks.map((chunk: any) => {
+                const fname = deckMap.get(chunk.deck_id) || "Unknown Deck"
+                return `[Deck: ${fname} | Slide ${chunk.slide_number}]: ${chunk.content}`
+            }).join('\n\n')
             : "No relevant slides found in selected decks."
 
         const systemPrompt = `
@@ -142,8 +143,8 @@ ${contextText}
 INSTRUCTIONS:
 - Synthesize information from multiple slides/decks if possible.
 - BE ACADEMIC: Use a formal, objective tone.
-- CITATIONS ARE MANDATORY: Whenever you use information, append a citation like [Slide X].
-- If the answer is not in the decks, you may provide a general academic answer but MUST state: "This is outside your selected decks, but generally..."
+- CITATIONS ARE MANDATORY: Whenever you use information, append a citation like [Deck Name - Slide X].
+- If the answer is not in the decks, DO NOT hallucinate. You may provide a general academic answer but MUST state: "This is outside your selected decks, but generally..."
 - Format for readability: Use bolding for key terms.
 
 Do not be conversational or chatty. Be a research tool.
@@ -156,20 +157,20 @@ Do not be conversational or chatty. Be a research tool.
                 { role: "user", content: message }
             ],
             model: "openai/gpt-oss-120b",
-            temperature: 0.5, // Lower temp for research
-            max_tokens: 1500, // Longer output for research
+            temperature: 0.4,
+            max_tokens: 1500,
             stream: true,
         });
 
         const encoder = new TextEncoder()
         let fullResponse = ""
 
-        // Construct sources metadata
-        // We might need to fetch deck names if we want pretty citations, but IDs are okay for now or we rely on frontend cache.
+        // Construct sources metadata with filenames
         const sources = finalChunks.map((c: any) => ({
             id: c.id,
             slide_number: c.slide_number,
             deck_id: c.deck_id,
+            filename: deckMap.get(c.deck_id) || "Unknown Deck"
         }))
 
         const stream = new ReadableStream({
@@ -190,14 +191,12 @@ Do not be conversational or chatty. Be a research tool.
 
                     // Save to DB
                     try {
-                        // User Msg
                         await supabase.from('research_messages').insert({
                             session_id: sessionId,
                             role: 'user',
                             content: message
                         })
 
-                        // AI Msg
                         await supabase.from('research_messages').insert({
                             session_id: sessionId,
                             role: 'assistant',
@@ -205,7 +204,6 @@ Do not be conversational or chatty. Be a research tool.
                             sources: sources
                         })
 
-                        // Log Usage
                         await supabase.from('usage_logs').insert({
                             user_id: user.id,
                             metric: 'research_turn',
@@ -213,7 +211,6 @@ Do not be conversational or chatty. Be a research tool.
                             bucket_month: logDate.toISOString().slice(0, 7) + '-01'
                         })
 
-                        // Update Session "last_opened_at"
                         await supabase.from('research_sessions')
                             .update({ last_opened_at: new Date().toISOString() })
                             .eq('id', sessionId)

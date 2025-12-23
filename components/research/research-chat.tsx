@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Send, Sparkles, Loader2, StopCircle } from "lucide-react"
-import { MessageBubble } from "@/components/chat/message-bubble"
+import { ResearchMessageBubble } from "@/components/research/research-message-bubble"
 import { cn } from "@/lib/utils"
 
 interface Message {
@@ -121,7 +121,7 @@ export function ResearchChat({ sessionId, initialMessages }: ResearchChatProps) 
                     </div>
                 ) : (
                     messages.map((msg, i) => (
-                        <MessageBubble
+                        <ResearchMessageBubble
                             key={i}
                             role={msg.role}
                             content={msg.content}

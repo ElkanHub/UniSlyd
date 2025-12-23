@@ -58,7 +58,7 @@ export function ResearchInterface({ session, messages, decks }: ResearchInterfac
                             <Sparkles className="w-4 h-4 text-purple-500" />
                             Research Assistant
                             <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
-                                <span className="text-xs">⌘</span>B
+                                <span className="text-xs">Ctrl+</span>B
                             </kbd>
                         </Button>
                     </SheetTrigger>
