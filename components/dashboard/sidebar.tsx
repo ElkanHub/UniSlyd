@@ -21,8 +21,8 @@ export function SidebarContent({ className }: SidebarContentProps) {
         // { href: '/dashboard/chat/new', label: 'New Study Session', icon: MessageSquarePlus },
         { href: '/dashboard/chats', label: 'My Chats', icon: MessageSquare },
         { href: '/dashboard/decks', label: 'My Decks', icon: FileText },
-        { href: '/dashboard/settings', label: 'Settings', icon: Settings },
         { href: '/dashboard/research', label: 'Research Zone', icon: BookSearch },
+        { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ]
 
     return (

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { ShinyButton } from '@/components/ui/shiny-button'
 
 export default async function SettingsPage() {
     const supabase = await createClient()
@@ -33,11 +34,18 @@ export default async function SettingsPage() {
 
                 <div className="p-6 border rounded-lg bg-card space-y-4">
                     <h3 className="font-semibold text-lg border-b pb-2">Subscription</h3>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between ">
                         <div>
                             <div className="font-medium">Current Plan</div>
                             <div className="text-sm text-muted-foreground capitalize">{profile?.tier?.replace('_', ' ') || 'Free'}</div>
                         </div>
+                        <div>
+                            {/* upgrade to pro button */}
+                            <ShinyButton className="w-full text-xs">
+                                Upgrade to Pro
+                            </ShinyButton>
+                        </div>
+
                     </div>
                 </div>
             </div>
