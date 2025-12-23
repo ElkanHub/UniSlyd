@@ -54,7 +54,7 @@ export function ResearchEditor({ sessionId, initialContent }: ResearchEditorProp
                         content={initialContent || {}}
                         onChange={handleContentChange}
                         placeholder="Start writing your research paper here..."
-                        className="h-full border-none"
+                        className="h-full border-border"
                     />
                 </div>
             </div>

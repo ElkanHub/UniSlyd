@@ -65,7 +65,7 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
         content: content,
         editorProps: {
             attributes: {
-                class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[150px] p-4',
+                class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-full p-4',
             },
         },
         onUpdate: ({ editor }) => {
@@ -78,9 +78,9 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
     }
 
     return (
-        <div className={cn("border rounded-md overflow-hidden bg-background", className)}>
+        <div className={cn("border rounded-md overflow-hidden bg-background flex flex-col", className)}>
             <EditorToolbar editor={editor} />
-            <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div className="flex-1 overflow-y-auto">
                 <EditorContent editor={editor} />
             </div>
         </div>
