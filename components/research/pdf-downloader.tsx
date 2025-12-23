@@ -14,8 +14,16 @@ interface PdfDownloaderProps {
 export default function PdfDownloader({ session, onComplete, onError }: PdfDownloaderProps) {
     useEffect(() => {
         const generate = async () => {
+            console.log("Starting PDF generation for session:", session?.id)
             try {
-                const blob = await pdf(<ResearchDocument session={session} />).toBlob()
+                if (!session) throw new Error("No session provided")
+                if (!session.editor_content) console.warn("Session has no editor content")
+
+                console.log("Generating blob...")
+                const instance = pdf(<ResearchDocument session={session} />)
+                const blob = await instance.toBlob()
+                console.log("Blob generated", blob.size)
+
                 const url = URL.createObjectURL(blob)
                 const link = document.createElement('a')
                 link.href = url
@@ -25,9 +33,14 @@ export default function PdfDownloader({ session, onComplete, onError }: PdfDownl
                 document.body.removeChild(link)
                 URL.revokeObjectURL(url)
 
+                console.log("Download triggered")
                 onComplete()
             } catch (error) {
-                console.error("PDF Generation Error", error)
+                console.error("PDF Generation Detailed Error:", error)
+                if (error instanceof Error) {
+                    console.error("Message:", error.message)
+                    console.error("Stack:", error.stack)
+                }
                 onError()
             }
         }

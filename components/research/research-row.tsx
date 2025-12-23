@@ -32,6 +32,7 @@ import dynamic from "next/dynamic"
 
 const PdfDownloader = dynamic(() => import("./pdf-downloader"), {
     ssr: false,
+    loading: () => <p className="hidden">Loading PDF module...</p>
 })
 
 interface ResearchRowProps {
@@ -76,16 +77,30 @@ export function ResearchRow({ session }: ResearchRowProps) {
     }
 
     const handleDownload = () => {
+        console.log("Download requested for:", session.title)
         toast.info("Generating PDF...")
         setIsDownloading(true)
+
+        // Safety timeout in case the component fails to mount or crash without callback
+        setTimeout(() => {
+            setIsDownloading(prev => {
+                if (prev) {
+                    toast.error("PDF generation timed out. Please try again.")
+                    return false
+                }
+                return prev
+            })
+        }, 15000)
     }
 
     const handleDownloadComplete = () => {
+        console.log("Download complete callback received")
         toast.success("PDF Downloaded successfully")
         setIsDownloading(false)
     }
 
     const handleDownloadError = () => {
+        console.log("Download error callback received")
         toast.error("Failed to generate PDF")
         setIsDownloading(false)
     }

@@ -52,7 +52,7 @@ export function ResearchList() {
             setHasMore((data?.length || 0) === 15)
             setInitialLoaded(true)
         } catch (error) {
-            console.error(error)
+            console.error("Failed to fetch sessions:", error)
         } finally {
             setIsLoading(false)
         }
