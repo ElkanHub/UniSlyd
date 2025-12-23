@@ -25,11 +25,12 @@ interface RichTextEditorProps {
     content: any
     onChange: (content: any) => void
     placeholder?: string
-    className?: string
+    readOnly?: boolean
 }
 
-export function RichTextEditor({ content, onChange, placeholder, className }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange, placeholder, className, readOnly = false }: RichTextEditorProps) {
     const editor = useEditor({
+        editable: !readOnly,
         extensions: [
             StarterKit,
             Placeholder.configure({
@@ -79,7 +80,7 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Ri
 
     return (
         <div className={cn("border rounded-md overflow-hidden bg-background flex flex-col", className)}>
-            <EditorToolbar editor={editor} />
+            {!readOnly && <EditorToolbar editor={editor} />}
             <div className="flex-1 overflow-y-auto">
                 <EditorContent editor={editor} />
             </div>

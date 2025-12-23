@@ -88,20 +88,52 @@ export async function deleteResearchSession(id: string) {
     revalidatePath('/dashboard/research')
 }
 
-export async function getResearchSessions() {
+export async function searchResearchSessions({
+    query = '',
+    page = 1,
+    limit = 15
+}: {
+    query?: string
+    page?: number
+    limit?: number
+} = {}) {
     const supabase = await createClient()
+    const offset = (page - 1) * limit
 
-    const { data, error } = await supabase
+    let queryBuilder = supabase
         .from('research_sessions')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('last_opened_at', { ascending: false })
+        .range(offset, offset + limit - 1)
+
+    if (query) {
+        queryBuilder = queryBuilder.ilike('title', `%${query}%`)
+    }
+
+    const { data, error, count } = await queryBuilder
 
     if (error) {
         console.error("Failed to fetch sessions", error)
-        return []
+        return { data: [], total: 0 }
     }
 
-    return data
+    return { data, total: count || 0 }
+}
+
+export async function renameResearchSession(id: string, newTitle: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('research_sessions')
+        .update({ title: newTitle })
+        .eq('id', id)
+
+    if (error) {
+        console.error("Failed to rename session", error)
+        throw new Error("Failed to rename session")
+    }
+
+    revalidatePath('/dashboard/research')
 }
 
 export async function getResearchSession(id: string) {
